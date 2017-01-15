@@ -1,0 +1,8 @@
+non_terminals = S, E, T
+terminals = +, (, ), id, const
+Start = E
+E -> T
+E -> E+T
+T -> (E)
+T -> id
+T -> const
