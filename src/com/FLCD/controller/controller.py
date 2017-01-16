@@ -1,6 +1,7 @@
 import re
 from collections import OrderedDict
 from collections import defaultdict
+from itertools import chain
 
 from src.com.FLCD.model.file_repo import FileRepo
 
@@ -51,8 +52,7 @@ class Controller(object):
         print(self.__workstack)
         print (self.__input)
         print (self.__output)
-
-
+        to_repl = self.process_result()
         return self.__state_closure, self.__computed_closure, self.__goto_state, self.__the_table, self.__terminals
 
     def get_shift(self, i, j):
@@ -259,3 +259,15 @@ class Controller(object):
 
     def is_acc(self, crt, el):
         return self.__the_table[(el, crt)] == "acc"
+
+    def process_result(self):
+        prods = []
+        for i in self.__output:
+            prods.append(self.get_production(i))
+        to_replace = prods[0]
+        prods = prods[1:]
+        for prod in prods:
+            if prod[0] in to_replace[1]:
+                idx = to_replace[1].index(prod[0])
+                to_replace[1][idx:idx+1] = prod[1]
+        return to_replace
