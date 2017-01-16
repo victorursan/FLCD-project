@@ -1,4 +1,5 @@
 import re
+from collections import OrderedDict
 from collections import defaultdict
 
 from src.com.FLCD.model.file_repo import FileRepo
@@ -11,22 +12,41 @@ class Controller(object):
         self.__computed_closure = []
         self.__goto_state = {}
         self.__the_table = {}
+        self.__ordered_productions = []
         self.__follow = defaultdict(list)
 
     def run(self):
         self.__productions = self.find_productions()
-        print(self.join_productions(self.__productions))
+        for k, v in self.__productions.items():
+            for value in v:
+                self.__ordered_productions.append((k, value))
+        # print(self.join_productions(self.__productions))
         start_point = [(self.__start, self.add_dot(self.__productions[self.__start][0]))]
         self.__state_closure.append(start_point)
         self.__computed_closure.append(self.compute_closure(start_point))
 
         self.canonical_collection_of_states()
-
-        print(self.follow())
+        self.__follow = self.follow()
+        # print(self.follow())
 
         for i in range(max(self.__goto_state.values()) + 1):
             for j in ["$"] + self.__non_terminals + self.__terminals:
-                self.__the_table[(i, j)] = self.get_shift(i, j) if not self.has_final(i) else -2  # todo
+                if (i, j) not in self.__the_table.keys():
+                    self.__the_table[(i, j)] = self.get_shift(i, j)
+                if self.has_final(self.get_shift(i, j)):
+                    finals = self.get_finals(self.get_shift(i, j))
+                    for final in finals:
+                        if self.is_accept(final):
+                            self.__the_table[(self.get_shift(i, j), '$')] = "acc"
+                        else:
+                            for f in self.__follow[final[0]]:
+                                r_final = (final[0], final[1][:-1])
+                                self.__the_table[(self.get_shift(i, j), f if f != '#' else '$')] = "R" +\
+                                    str(self.__ordered_productions.index(r_final))
+
+
+
+
         return self.__state_closure, self.__computed_closure, self.__goto_state, self.__the_table
 
     def get_shift(self, i, j):
@@ -49,7 +69,7 @@ class Controller(object):
             self.canonical_collection_of_states(poz + 1)
 
     def find_productions(self):
-        new_productions = {}
+        new_productions = OrderedDict()
         to_split = self.__non_terminals + self.__terminals
         for k, v in self.__productions.items():
             new_val = []
@@ -61,7 +81,12 @@ class Controller(object):
         return new_productions
 
     def has_final(self, prod):
-        return any([self.is_finished(x[1]) for x in self.__computed_closure[prod]])
+        if prod > 0:
+            return any([self.is_finished(x[1]) for x in self.__computed_closure[prod]])
+        return False
+
+    def get_finals(self, prod):
+        return filter(lambda x: self.is_finished(x[1]), self.__computed_closure[prod])
 
     @staticmethod
     def add_dot(lst):
@@ -104,6 +129,9 @@ class Controller(object):
     @staticmethod
     def join_productions(productions):
         return [k + " -> " + " | ".join(["".join(e) for e in v]) for k, v in productions.items()]
+
+    def is_accept(self, pr):
+        return pr[0] == self.__start and self.is_finished(pr[1])
 
     def first(self):
         first_map = {"#": set("#")}

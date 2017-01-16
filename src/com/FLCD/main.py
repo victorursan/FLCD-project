@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from src.com.FLCD.controller.controller import Controller
 
 if __name__ == '__main__':
@@ -6,5 +8,5 @@ if __name__ == '__main__':
     print(state_closure)
     print(computed_closure)
     print(goto_state)
-    print(the_table)
+    pprint(the_table)
 
