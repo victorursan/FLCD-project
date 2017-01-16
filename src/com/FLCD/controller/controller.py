@@ -14,6 +14,9 @@ class Controller(object):
         self.__the_table = {}
         self.__ordered_productions = []
         self.__follow = defaultdict(list)
+        self.__workstack = []
+        self.__input = []
+        self.__output = []
 
     def run(self):
         self.__productions = self.find_productions()
@@ -44,10 +47,13 @@ class Controller(object):
                                 self.__the_table[(self.get_shift(i, j), f if f != '#' else '$')] = "R" +\
                                     str(self.__ordered_productions.index(r_final))
 
+        self.process_input()
+        print(self.__workstack)
+        print (self.__input)
+        print (self.__output)
 
 
-
-        return self.__state_closure, self.__computed_closure, self.__goto_state, self.__the_table
+        return self.__state_closure, self.__computed_closure, self.__goto_state, self.__the_table, self.__terminals
 
     def get_shift(self, i, j):
         return self.__goto_state[(i, j)] if (i, j) in self.__goto_state.keys() else -1
@@ -200,3 +206,56 @@ class Controller(object):
                                     follow_map[non_terminal] |= follow_map[k]
                                     changed = True
         return follow_map
+
+    def process_input(self):
+        self.__input = FileRepo.process_input("input", self.__terminals)
+        self.__input.append('$')
+        self.__workstack.append(0)
+        self.__output.append("#")
+
+        while True:
+            crt = self.__input[0]
+            el = self.__workstack[-1]
+            if self.is_acc(crt, el) and len(self.__input) == 1:
+                self.__workstack = ['$', 'acc']
+                break
+            elif self.to_shift(crt, el):
+                act = self.get_shift_value(crt, el)
+                if not crt == "$":
+                    self.__input.pop(0)
+                else:
+                    print("Smth when wrong")
+                    break
+                self.__workstack.append(crt)
+                self.__workstack.append(act)
+            else:
+                act = self.get_reduce(crt, el)
+                k, v = self.get_production(act)
+                much = len(v) * 2
+                self.__workstack = self.__workstack[:-much]
+                self.add_to_output(act)
+                prv = self.__workstack[-1]
+                self.__workstack.append(k)
+                self.__workstack.append(self.__the_table[(prv, k)])
+
+    def to_shift(self, crt, el):
+        return isinstance(self.__the_table[(el, crt)], int)
+
+    def get_shift_value(self, crt, el):
+        return self.__the_table[(el, crt)]
+
+    def get_reduce(self, crt, el):
+        result = self.__the_table[(el, crt)]
+        return int(result.replace("R", ""))
+
+    def get_production(self, i):
+        return self.__ordered_productions[i]
+
+    def add_to_output(self, act):
+        if self.__output[0] == "#":
+            self.__output[0] = act
+        else:
+            self.__output.insert(0, act)
+
+    def is_acc(self, crt, el):
+        return self.__the_table[(el, crt)] == "acc"

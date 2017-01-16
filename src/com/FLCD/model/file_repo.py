@@ -1,3 +1,5 @@
+import re
+
 from collections import defaultdict
 
 
@@ -24,3 +26,13 @@ class FileRepo(object):
         for productions_list in productions_string:
             productions[productions_list[0]].append([el.strip() for el in productions_list[1].split(" | ")])
         return productions
+
+    @classmethod
+    def process_input(cls, filename, terminals):
+        input_prog = []
+        with open(filename, 'r') as f:
+            pattern = "(" + "|".join(map(lambda x: re.escape(x), terminals)) + ")"
+            for line in f.readlines():
+                n_v = filter(lambda x: x.strip(), re.split(pattern,line))
+                input_prog.extend(n_v)
+        return input_prog
