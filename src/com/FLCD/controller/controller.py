@@ -22,9 +22,12 @@ class Controller(object):
         return self.__state_closure, self.__computed_closure, self.__goto_state
 
     def canonical_collection_of_states(self, poz=0):
-        to_do = set(
-            map(lambda y: self.get_next(y[1]),
-                filter(lambda x: not self.is_finished(x[1]), self.__computed_closure[poz])))
+        to_do = []
+        for e in map(lambda y: self.get_next(y[1]),
+                     filter(lambda x: not self.is_finished(x[1]), self.__computed_closure[poz])):
+            if e not in to_do:
+                to_do.append(e)
+
         for t in to_do:
             clj = self.goto_to_closure(poz, t)
             if clj not in self.__state_closure:
