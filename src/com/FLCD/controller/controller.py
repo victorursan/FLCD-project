@@ -283,6 +283,7 @@ class Controller(object):
         for prod in prods:
             print(to_replace)
             if prod[0] in to_replace[1]:
-                idx = to_replace[1].index(prod[0])
+                idxs = [pos for pos, itm in enumerate(to_replace[1]) if itm == prod[0]]
+                idx = idxs[-1]
                 to_replace[1][idx:idx + 1] = prod[1]
         return to_replace
