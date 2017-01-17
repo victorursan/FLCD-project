@@ -51,8 +51,11 @@ class Controller(object):
         print(self.__workstack)
         print(self.__input)
         print(self.__output)
+        for i in range (len(self.__ordered_productions)):
+            print(str(i) + " :" + str(self.__ordered_productions[i]))
         to_repl = self.process_result()
         print(to_repl)
+
         return self.__state_closure, self.__computed_closure, self.__goto_state, self.__the_table, self.__terminals
 
     def get_shift(self, i, j):
